@@ -1,15 +1,12 @@
 var http          = require('http');
 var express       = require('express');
 var app           = express();
-var serveStatic   = require('serve-static');
 var instagram     = require('instagram-node').instagram();
 var session       = require('client-sessions');
 var config        = require('./env.js');
 
 // Eventually, check environment variables and build config.  Putting all in 'base' for now.
 config = config.base;
-
-var accessToken = null;
 
 instagram.use({
     client_id: config['INSTAGRAM_CLIENT_ID'],
@@ -23,6 +20,8 @@ app.use(session({
   activeDuration: config['SESSION_ACTIVE_DURATION']
 }));
 
+app.use(express.static('src/app'));
+
 function requireLogin (req, res, next) {
     console.log('checking login..');
     if (req[config['SESSION_NAME']] && req[config['SESSION_NAME']].username) {
@@ -30,7 +29,7 @@ function requireLogin (req, res, next) {
         next();
     }
     else {
-        console.log('logging in with instagram');
+        console.log('no session found, getting code');
 
         // After authorization, instagram will redirect to /auth.
         res.redirect(instagram.get_authorization_url(config['INSTAGRAM_REDIRECT_URI'], { scope: ['likes'], state: 'a state' }));
@@ -45,17 +44,16 @@ app.get('/auth', function (req, res) {
       res.send("Didn't work");
     } 
     else {
-      console.log('logged into instagram.  Result:', result);
+      console.log('logged into instagram:', result.user.full_name);
       req[config['SESSION_NAME']].username = result.user.username;
-      accessToken = result.accessToken;
-      res.redirect('/');
+      console.log('session:', req[config['SESSION_NAME']]);
+      res.redirect('/*');
     }
   });
 });
 
-app.use(serveStatic(__dirname + '/src'));
-
 app.get('/*', requireLogin, function (req, res) {
+
     console.log('/*');
     var options = {
         root: __dirname + '/src/',

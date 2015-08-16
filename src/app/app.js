@@ -1,13 +1,10 @@
 'use strict';
 
-angular.module('instagramFoodLocator', ['ngRoute', 'app.components.navbar'])
+angular.module('instagramFoodLocator', ['ngRoute', 'app.components.navbar', 'app.components.foodViewer'])
     .config(function ($routeProvider, $locationProvider) {
   
     $routeProvider.when('/', {
         templateUrl: 'pages/home.html'
-    })
-    $routeProvider.when('/dashboard', {
-        templateUrl: 'pages/dashboard.html'
     })
     .otherwise({
       redirectTo: '/'
