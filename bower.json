@@ -18,6 +18,7 @@
     "angular-route": "~1.4.4",
     "Bootflat": "~2.0.4",
     "jquery": "~2.1.4",
-    "bootstrap": "~3.3.5"
+    "bootstrap": "~3.3.5",
+    "angular-cookies": "~1.4.4"
   }
 }

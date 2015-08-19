@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('instagramFoodLocator', ['ngRoute', 'app.components.navbar', 'app.components.foodViewer'])
+angular.module('instagramFoodLocator', ['ngRoute', 'ngCookies', 'app.components.navbar', 'app.components.foodViewer'])
     .config(function ($routeProvider, $locationProvider) {
   
     $routeProvider.when('/', {

@@ -1,12 +1,19 @@
-var http          = require('http');
 var express       = require('express');
 var app           = express();
 var instagram     = require('instagram-node').instagram();
 var session       = require('client-sessions');
 var config        = require('./env.js');
+var firebase      = require('./server/firebase.js');
 
 // Eventually, check environment variables and build config.  Putting all in 'base' for now.
 config = config.base;
+
+var accessToken = firebase.getAccessToken();
+
+firebase.testQ()
+    .then(function (name) {
+        console.log('finished firebase.testQ:', name);
+    });
 
 instagram.use({
     client_id: config['INSTAGRAM_CLIENT_ID'],
@@ -44,17 +51,26 @@ app.get('/auth', function (req, res) {
       res.send("Didn't work");
     } 
     else {
-      console.log('logged into instagram:', result.user.full_name);
+      console.log('logged into instagram:', result.user.full_name, result.access_token);
+
+      // Automatically triggers a response that keeps a matching cookie
+      // on the client (encrypted).
       req[config['SESSION_NAME']].username = result.user.username;
-      console.log('session:', req[config['SESSION_NAME']]);
+
+      accessToken = result.accessToken;
+
       res.redirect('/*');
     }
   });
 });
 
-app.get('/*', requireLogin, function (req, res) {
+app.get('/local-eats', requireLogin, function (req, res) {
+    res.send('local-eats');
+});
 
+app.get('/*', requireLogin, function (req, res) {
     console.log('/*');
+    console.log('accessToken', accessToken)
     var options = {
         root: __dirname + '/src/',
         dotfiles: 'deny',
