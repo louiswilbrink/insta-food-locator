@@ -8,13 +8,6 @@ var firebase      = require('./server/firebase.js');
 // Eventually, check environment variables and build config.  Putting all in 'base' for now.
 config = config.base;
 
-var accessToken = firebase.getAccessToken();
-
-firebase.testQ()
-    .then(function (name) {
-        console.log('finished firebase.testQ:', name);
-    });
-
 instagram.use({
     client_id: config['INSTAGRAM_CLIENT_ID'],
     client_secret: config['INSTAGRAM_CLIENT_SECRET']
@@ -45,9 +38,10 @@ function requireLogin (req, res, next) {
 
 app.get('/auth', function (req, res) {
   console.log('/auth');
-  instagram.authorize_user(req.query.code, config['INSTAGRAM_REDIRECT_URI'], function(err, result) {
-    if (err) {
-      console.log('err', err.body);
+
+  instagram.authorize_user(req.query.code, config['INSTAGRAM_REDIRECT_URI'], function(error, result) {
+    if (error) {
+      console.log('error', error.body);
       res.send("Didn't work");
     } 
     else {
@@ -57,7 +51,17 @@ app.get('/auth', function (req, res) {
       // on the client (encrypted).
       req[config['SESSION_NAME']].username = result.user.username;
 
-      accessToken = result.accessToken;
+      // Save username: accessToken pair.
+      firebase.saveAccessToken(result.user.username, result.access_token)
+          .then(function (isSaved) {
+              if (isSaved) {
+                  console.log('accessToken saved!');
+              }
+          })
+          .fail(function (error) {
+              console.log('error saving accessToken for', result.user.username, error);
+              //res.redirect('/login-error');
+          });
 
       res.redirect('/*');
     }
@@ -70,7 +74,7 @@ app.get('/local-eats', requireLogin, function (req, res) {
 
 app.get('/*', requireLogin, function (req, res) {
     console.log('/*');
-    console.log('accessToken', accessToken)
+
     var options = {
         root: __dirname + '/src/',
         dotfiles: 'deny',
@@ -80,10 +84,10 @@ app.get('/*', requireLogin, function (req, res) {
         }
     };
 
-    res.sendFile('index.html', options, function (err) {
-        if (err) {
-            console.log(err);
-            res.status(err.status).end();
+    res.sendFile('index.html', options, function (error) {
+        if (error) {
+            console.log(error);
+            res.status(error.status).end();
         }
     });
 });
